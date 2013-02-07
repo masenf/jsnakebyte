@@ -8,11 +8,12 @@ function initBlocks(width, height)
     tempCanvas.setAttribute('width', width);
     tempCanvas.setAttribute('height', height);
     tempCanvas.setAttribute('id', 'tempCanvas');
-    document.getElementById('temp').appendChild(tempCanvas);
+    tempCanvas.style.visibility = "hidden";
+    document.body.appendChild(tempCanvas);
     var c=tempCanvas.getContext('2d');
 
     // BEGIN BLOCKS DRAWING
-    
+
     // 0 : JSB_EMPTY empty space (set main background color here)
     c.fillStyle=background;
     c.fillRect(0,0,width,height);
@@ -221,7 +222,7 @@ function initBlocks(width, height)
     blocks[14] = c.getImageData(0,0,width,height);
     JSB_APPLE = 14;
     // 15 : JSB_BONUSAPPLE (not implemented)
-	
+
     // 16 : JSB_PLUM
     c.fillStyle=background;
     c.fillRect(0,0,width,height);
@@ -232,7 +233,7 @@ function initBlocks(width, height)
     c.stroke();
     blocks[16] = c.getImageData(0,0,width,height);
     JSB_PLUM = 16;
-    
+
     // 18 : JSB_TIMER timer (time left)
     var blue = '#1d22f1';
     c.lineWidth = height / 8;
@@ -304,7 +305,7 @@ function initBlocks(width, height)
     c.stroke();
     blocks[201] = c.getImageData(0,0,width,height);
     JSB_ROOM_02_1 = 201;
-    
+
     // 301 : ROOM_03_1
     var blue = '#d335e1';
     var orange = '#eb6300';
@@ -337,7 +338,7 @@ function initBlocks(width, height)
     c.stroke();
     blocks[401] = c.getImageData(0,0,width,height);
     JSB_ROOM_04_1 = 401;
-    
+
     // 501 : ROOM_05_1
     c.lineWidth = height / 8;
     c.fillStyle=background;
@@ -358,7 +359,7 @@ function initBlocks(width, height)
     c.stroke();
     blocks[501] = c.getImageData(0,0,width,height);
     JSB_ROOM_05_1 = 501;
-    
+
     // 601 : ROOM_06_1
     c.lineWidth = height / 8;
     c.fillStyle=background;
@@ -379,7 +380,7 @@ function initBlocks(width, height)
     c.stroke();
     blocks[601] = c.getImageData(0,0,width,height);
     JSB_ROOM_06_1 = 601;
-   
+
     // 701 : ROOM_07_1
     c.lineWidth = height / 8;
     c.fillStyle=background;
@@ -400,7 +401,7 @@ function initBlocks(width, height)
     c.stroke();
     blocks[701] = c.getImageData(0,0,width,height);
     JSB_ROOM_07_1 = 701;
-    
+
     // 801 : ROOM_08_1
     var purple = '#da28d8';
     var yellow = '#1fdf00';

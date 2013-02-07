@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>JSnakeByte</title>
+<script language=javascript src='defaults.js'></script>
+<script language=javascript src='blocks.js'></script>
+<script language=javascript src='level.js'></script>
+<script language=javascript src='rooms.js'></script>
+<script language=javascript>
+console.log("Setting default values");
+var game;       // the game state
+var c;
+var s;
+var paused = false;
+var crashed = false;
+var score = 0;
+var lives = 0;
+var apples = 0;
+var apples_total = 0;
+var timer;      // the repeat loop
+
+function begin_game(starting_level) {
+    game = initGame(board_div_id, board_width, board_height, block_sz);
+    game.board.updateBoard();
+    c = document.getElementById(board_div_id);
+    s = document.getElementById(stats_div_id);
+    s.setAttribute('width',c.width);    // set stats width equal to game width
+    document.onkeyup=key_handler;
+    paused = false;
+    crashed = false;
+    if (starting_level)
+        new_game(starting_level);
+    else
+        new_game(1);
+}
+function key_handler(e) {
+    var key=e.keyCode? e.keyCode : e.charCode
+    if (key == key_left) {
+        game.snake.queue_turn('left');
+    } else if (key == key_right) {
+        game.snake.queue_turn('right');
+    } else if (key == key_continue) {
+        console.log("speed = " + speed);
+        if (paused)
+        {
+            step();
+            paused = false;
+        }
+        else if (crashed) {
+            console.log("The player was crashed");
+            new_room(level);
+            console.log("So a new room was created");
+            speed = 1;
+            lives--;
+            apples = apples_total;
+            crashed = false;
+        }
+    } else if (key == key_pause) {
+        stop()
+        paused = true;
+    }
+    console.log(key);
+}
+function new_game (sl) {
+    if (parseInt(sl))
+        level = parseInt(sl);
+    else
+        level = 1;
+
+    // reset all stats
+    score = 0;
+    lives = default_lives;
+    apple_value = base_apple_value;
+    apples_total = default_apples;
+
+    // start the level specified
+    new_room(level);
+}
+function new_room (level) {
+    if (new_room.caller == null) 
+        console.log("new_room(called from root) - resetting state for level " + level);
+    else
+        console.log("new_room(called from " + new_room.caller.name  + ") - resetting state for level " + level);
+    // reset the snake to bottom center
+    game.reset(game.board.width / 2,game.board.height - 1,0);
+
+    // load the room into the game state
+	if (level)
+		game.board.loadRoom(getRoom(level,game.board.width,game.board.height));
+	else
+		game.board.loadRoom();
+    game.board.updateBoard();
+
+    // set per life stats
+    speed = default_speed;
+    apples = apples_total;
+    game.spawnApple();
+	game.board.clearPlums();
+	game.spawnPlum(1,1,3);
+
+    // start the step timer
+    start();
+}
+function step () {
+    // this is the main game loop
+    var ev = game.redraw(game.snake.step());    // recalculate everything
+    var collision = ev.collision;
+    var board_timer = ev.board_timer;
+    console.log(collision);
+    if (collision == JSB_APPLE)
+    {       // got an apple
+        score += apple_value;
+        speed += 1;
+        apples -= 1;
+        game.snake.max_length += 3;
+        game.board.resetTimer();
+        if (apples <= 0)
+        {           // it was the last apple
+            game.timer_active = false;
+            game.board.openDoor(game.board.width / 2,0,JSB_EXIT);
+            game.board.updateBoard();
+        } else {    // still more to go
+            if (game.apples == 0)
+                game.spawnApple();
+        }
+    } else if (collision == JSB_EXIT)
+    {       // made it through the exit
+        apples_total = default_apples;
+        apple_value += base_apple_value;
+        lives += 1;
+        level += 1;
+        console.log("EXITING");
+        this.game.board.plums = 0;
+        return exit_anim();
+    } else if (collision > 0) 
+    {       // hit something else
+        console.log("CRASH")
+        if (lives > 0)
+        {   // game over
+            crashed = true;
+            return 0;
+        } else
+        {   // lose a life, restart level
+            var width = game.board.width * game.board.block_size;
+            var height = game.board.height * game.board.block_size;
+            var text_width = game.board.ctx.measureText("GAME OVER").width;
+            game.board.ctx.fillStyle = "#FFF";
+            game.board.ctx.fillText("GAME OVER", (width + text_width) / 2, height / 2);
+            return 0;
+        }
+    }
+    if (board_timer > 0 && apples > 0)
+    {
+        apples_total += 3;
+        apples += 3;
+        game.board.resetTimer()
+        game.spawnApple();
+        game.spawnApple();
+        game.spawnApple();
+    }
+    updateStats();
+    start();        // make sure to run again next time
+}
+function updateStats() {
+    var c_score = document.getElementById('c_score');
+    var c_lives = document.getElementById('c_lives');
+    var c_apples = document.getElementById('c_apples');
+    var c_value = document.getElementById('c_value');
+    var c_level = document.getElementById('c_level');
+
+    c_score.innerHTML = score;
+    c_lives.innerHTML = lives;
+    c_apples.innerHTML = apples;
+    c_value.innerHTML = apple_value;
+    c_level.innerHTML = level;
+}
+function start() {
+    stop();
+    var delay = base_time - increment*speed;
+    timer = setTimeout("step()", delay);
+}
+function stop()  { clearTimeout(timer); }          // pause the snake
+// advance the snake rapidly to the exit
+function exit_anim() {
+    game.snake.max_length = -1;
+    var ev = game.redraw(game.snake.step());
+    if (ev.collision > 0)
+        setTimeout('exit_anim()',30);
+    else
+    {
+        new_room(level);
+    }
+}
+
+</script>
+<style>
+.stat_table td { width : 25% }
+.stat_table { font-family: menlo, monospace;
+              letter-spacing: 0.25em; }
+body { background-color: #111; color: #EEE }
+</style>
+
+</head>
+<body>
+<center>
+<input type=text id='text_start_level' value=1>
+<input type=button onclick='begin_game()' value='start game'>
+<input type=button onclick='game.speed=1;' value='normal speed'>
+<input type=button onclick='game.speed=0.25;' value='slow speed'><br>
+<canvas id='main_test_canvas' width=500 height=500>
+Your browser must support HTML5/Canvas
+</canvas>
+<table id='stats' class='stat_table'>
+<tr><td>SCORE</td><td id='c_score'>0</td><td>HI SCORE</td><td id='c_hiscore'>0</td></tr>
+<tr><td>APPLES LEFT</td><td id='c_apples'>10</td><td>VALUE</td><td id='c_value'>10</td></tr>
+<tr><td>LIVES LEFT</td><td id='c_lives'>0</td><td>LEVEL</td><td id='c_level'>1</td></tr>
+</table>
+</center>
+</body>
+</html>
